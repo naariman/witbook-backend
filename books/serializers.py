@@ -40,6 +40,23 @@ class ReadingSessionSerializer(serializers.ModelSerializer):
         fields = ['created_date', 'session_duration',
                   'from_page_to_page', 'from_time_to_time', 'notes', 'current_page']
 
+    def create(self, validated_data):
+        book = self.context['book']
+        current_page = validated_data.get('current_page', book.current_page)
+
+        if current_page > book.pages_amount:
+            raise serializers.ValidationError("Текущая страница не может быть больше общего количества страниц")
+
+        book.current_page = current_page
+        if 0 < current_page < book.pages_amount:
+            book.reading_status = 'now_reading'
+        if current_page == book.pages_amount:
+            book.reading_status = 'finished_reading'
+
+        book.save()
+
+        return super().create(validated_data)
+
     def get_created_date(self, obj):
         return obj.created_at.strftime('%d.%m.%Y')
 
@@ -71,24 +88,3 @@ class ReadingSessionSerializer(serializers.ModelSerializer):
             )
 
         return value
-
-    def validate(self, data):
-        book = self.context['book']
-        current_page = data.get('current_page', book.current_page)
-
-        if not isinstance(current_page, int):
-            raise serializers.ValidationError("Текущая страница должна быть целым числом")
-
-        if current_page > book.pages_amount:
-            raise serializers.ValidationError("Текущая страница не может быть больше общего количества страниц")
-
-        if 0 < current_page < book.pages_amount:
-            book.reading_status = 'now_reading'
-            book.save()
-
-        if current_page == book.pages_amount:
-            book.reading_status = 'finished_reading'
-            book.save()
-
-        data['current_page'] = current_page
-        return data
