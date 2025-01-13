@@ -65,3 +65,15 @@ class BookDetailsView(APIView):
         sessions = book.sessions.all()
         serializer = ReadingSessionSerializer(sessions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class BookDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, book_id):
+        try:
+            book = Book.objects.get(id=book_id, user=request.user)
+        except Book.DoesNotExist:
+            return Response({"error": "Книга не найдена"}, status=status.HTTP_404_NOT_FOUND)
+
+        book.delete()
+        return Response({"message": "Книга удалена"}, status=status.HTTP_204_NO_CONTENT)
