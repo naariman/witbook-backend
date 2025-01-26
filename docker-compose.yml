@@ -1,10 +1,4 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
-    volumes:
-      - ./db:/code/db
-    ports:
-      - "8000:8000"
-    restart: always
+  web: { build: ., volumes: [ /snap/db:/code/db ], ports: [ "8000:8000" ], restart: always }
