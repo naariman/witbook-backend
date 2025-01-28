@@ -58,7 +58,7 @@ WSGI_APPLICATION = 'witbook.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/snap/db/db.sqlite3',
+        'NAME': 'db/../db.sqlite3',
     }
 }
 
@@ -86,7 +86,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "static_root"
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = '/code/media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

@@ -1,4 +1,11 @@
 version: '3.8'
 
 services:
-  web: { build: ., volumes: [ /snap/db:/code/db ], ports: [ "8000:8000" ], restart: always }
+  web:
+    build: .
+    volumes:
+      - ./db.sqlite3:/code/db.sqlite3
+      - ./media:/code/media
+    ports:
+      - "8000:8000"
+    restart: always
