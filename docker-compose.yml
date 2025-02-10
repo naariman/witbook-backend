@@ -4,8 +4,11 @@ services:
   web:
     build: .
     volumes:
-      - ./db.sqlite3:/code/db.sqlite3
-      - ./media:/code/media
+      - sqlite_volume:/code
     ports:
-      - "8080:8080"
+      - "8080:8000"
     restart: always
+
+
+volumes:
+  sqlite_volume:
