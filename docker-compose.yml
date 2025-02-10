@@ -7,5 +7,5 @@ services:
       - ./db.sqlite3:/code/db.sqlite3
       - ./media:/code/media
     ports:
-      - "8000:8000"
+      - "8080:8080"
     restart: always
