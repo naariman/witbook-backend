@@ -35,7 +35,7 @@ class UserLoginSerializer(serializers.Serializer):
             return {
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
-                'access_expires_in': access_lifetime.total_seconds(),
+                'access_expires_in': "123",
                 'refresh_expires_in': refresh_lifetime.total_seconds(),
             }
         raise serializers.ValidationError("Неверный email или пароль")
