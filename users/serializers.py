@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from witbook import settings
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -27,9 +29,14 @@ class UserLoginSerializer(serializers.Serializer):
         user = CustomUser.objects.filter(email=data['email']).first()
         if user and user.check_password(data['password']):
             refresh = RefreshToken.for_user(user)
+            access_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
+            refresh_lifetime = settings.SIMPLE_JWT['SLIDING_TOKEN_REFRESH_LIFETIME']
+
             return {
                 'access_token': str(refresh.access_token),
-                'refresh_token': str(refresh)
+                'refresh_token': str(refresh),
+                'access_expires_in': access_lifetime.total_seconds(),
+                'refresh_expires_in': refresh_lifetime.total_seconds(),
             }
         raise serializers.ValidationError("Неверный email или пароль")
 
