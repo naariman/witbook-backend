@@ -30,12 +30,11 @@ class UserLoginSerializer(serializers.Serializer):
         if user and user.check_password(data['password']):
             refresh = RefreshToken.for_user(user)
             access_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
-            refresh_lifetime = settings.SIMPLE_JWT['SLIDING_TOKEN_REFRESH_LIFETIME']
+            refresh_lifetime = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
 
             return {
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
-
                 'access_expires_in': access_lifetime.total_seconds(),
                 'refresh_expires_in': refresh_lifetime.total_seconds(),
             }
@@ -49,31 +48,36 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserRefreshTokenSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
 
-    def validate(self, data):
+    def validate(self, attrs):
         try:
-            refresh = RefreshToken(data['refresh_token'])
-            # Verify the token is not blacklisted
-            if refresh.blacklisted:
-                raise serializers.ValidationError("Токен находится в черном списке")
+            refresh = RefreshToken(attrs['refresh_token'])
             
-            # Verify the token is not expired
-            if refresh.is_expired():
-                raise serializers.ValidationError("Токен просрочен")
+            # Get token types from settings
+            access_lifetime = settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME')
+            refresh_lifetime = settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME')
 
-            access_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
-            refresh_lifetime = settings.SIMPLE_JWT['SLIDING_TOKEN_REFRESH_LIFETIME']
+            # Create new tokens
+            access_token = str(refresh.access_token)
+            new_refresh_token = str(refresh)
 
-            # Rotate refresh token if enabled
             if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
-                refresh.set_jti()
-                refresh.set_exp()
-                refresh.set_iat()
+                if settings.SIMPLE_JWT.get('BLACKLIST_AFTER_ROTATION', False):
+                    try:
+                        # Blacklist current refresh token
+                        refresh.blacklist()
+                    except AttributeError:
+                        pass
 
             return {
-                'access_token': str(refresh.access_token),
-                'refresh_token': str(refresh),
-                'access_expires_in': access_lifetime.total_seconds(),
-                'refresh_expires_in': refresh_lifetime.total_seconds(),
+                'access_token': access_token,
+                'refresh_token': new_refresh_token,
+                'access_expires_in': int(access_lifetime.total_seconds()),
+                'refresh_expires_in': int(refresh_lifetime.total_seconds()),
             }
         except Exception as e:
-            raise serializers.ValidationError("Неверный refresh token")
+            raise serializers.ValidationError(
+                {
+                    'refresh_token': ['Неверный или просроченный refresh token'],
+                    'detail': str(e)
+                }
+            )
