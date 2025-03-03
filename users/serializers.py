@@ -35,7 +35,7 @@ class UserLoginSerializer(serializers.Serializer):
             return {
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
-                'access_expires_in': "123",
+                'access_expires_in': access_lifetime.total_seconds(),
                 'refresh_expires_in': refresh_lifetime.total_seconds(),
             }
         raise serializers.ValidationError("Неверный email или пароль")
@@ -51,9 +51,20 @@ class UserRefreshTokenSerializer(serializers.Serializer):
     def validate(self, data):
         try:
             refresh = RefreshToken(data['refresh_token'])
+            access_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
+            refresh_lifetime = settings.SIMPLE_JWT['SLIDING_TOKEN_REFRESH_LIFETIME']
+
+            # Rotate refresh token if enabled
+            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
+                refresh.set_jti()
+                refresh.set_exp()
+                refresh.set_iat()
+
             return {
                 'access_token': str(refresh.access_token),
-                'refresh_token': str(refresh)
+                'refresh_token': str(refresh),
+                'access_expires_in': access_lifetime.total_seconds(),
+                'refresh_expires_in': refresh_lifetime.total_seconds(),
             }
         except Exception as e:
             raise serializers.ValidationError("Неверный refresh token")
