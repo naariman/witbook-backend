@@ -35,6 +35,7 @@ class UserLoginSerializer(serializers.Serializer):
             return {
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
+
                 'access_expires_in': access_lifetime.total_seconds(),
                 'refresh_expires_in': refresh_lifetime.total_seconds(),
             }
@@ -51,6 +52,14 @@ class UserRefreshTokenSerializer(serializers.Serializer):
     def validate(self, data):
         try:
             refresh = RefreshToken(data['refresh_token'])
+            # Verify the token is not blacklisted
+            if refresh.blacklisted:
+                raise serializers.ValidationError("Токен находится в черном списке")
+            
+            # Verify the token is not expired
+            if refresh.is_expired():
+                raise serializers.ValidationError("Токен просрочен")
+
             access_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
             refresh_lifetime = settings.SIMPLE_JWT['SLIDING_TOKEN_REFRESH_LIFETIME']
 
