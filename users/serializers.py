@@ -60,14 +60,6 @@ class UserRefreshTokenSerializer(serializers.Serializer):
             access_token = str(refresh.access_token)
             new_refresh_token = str(refresh)
 
-            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
-                if settings.SIMPLE_JWT.get('BLACKLIST_AFTER_ROTATION', False):
-                    try:
-                        # Blacklist current refresh token
-                        refresh.blacklist()
-                    except AttributeError:
-                        pass
-
             return {
                 'access_token': access_token,
                 'refresh_token': new_refresh_token,
